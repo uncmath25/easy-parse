@@ -1,4 +1,3 @@
-import json
 import xml.sax
 
 
@@ -16,7 +15,6 @@ class XmlToJsonHandler(xml.sax.ContentHandler):
         self._was_last_tag_end = False
         self._current_content = ''
 
-
         self._ATTRIBUTE_PREFIX = '@'
         self._CONTENT_PREFIX = '#text'
 
@@ -31,9 +29,7 @@ class XmlToJsonHandler(xml.sax.ContentHandler):
             self._depth_dict_counts[self._current_depth - 1][tag] = 1
         else:
             self._depth_dict_counts[self._current_depth - 1][tag] += 1
-        self._pointer_path.\
-            append([tag, int(self._depth_dict_counts[self._current_depth - 1]
-                                                    [tag])-1])
+        self._pointer_path.append([tag, int(self._depth_dict_counts[self._current_depth - 1][tag]) - 1])
         self._was_last_tag_end = False
         self._init_with_pointer_path()
         self._add_attributes_with_pointer_path(attributes.items())
@@ -63,17 +59,12 @@ class XmlToJsonHandler(xml.sax.ContentHandler):
         """
         assignment_string = 'self._json_dict'
         for key_tuple in self._pointer_path[:-1]:
-            assignment_string += '["' + key_tuple[0] + '"]' \
-                if key_tuple[1] == 0 \
-                else '["' + key_tuple[0] + '"][' + str(key_tuple[1]) + ']'
+            assignment_string += '["' + key_tuple[0] + '"]' if key_tuple[1] == 0 else '["' + key_tuple[0] + '"][' + str(key_tuple[1]) + ']'
         assignment_string += '["' + self._pointer_path[-1][0] + '"]'
         if self._pointer_path[-1][1] == 0:
             assignment_string += '= {}'
         elif self._pointer_path[-1][1] == 1:
-            assignment_string += \
-                ' = [str(' + assignment_string + ') if isinstance(' \
-                + assignment_string + ', str) else dict(' + assignment_string \
-                + '), {}]'
+            assignment_string += ' = [str(' + assignment_string + ') if isinstance(' + assignment_string + ', str) else dict(' + assignment_string + '), {}]'
         else:
             assignment_string += '.append({})'
 
@@ -84,30 +75,24 @@ class XmlToJsonHandler(xml.sax.ContentHandler):
         Add attributes at the current node
         """
         if len(attribute_pairs) == 0:
-            return()
+            return
 
         attr_dict = {}
         assignment_string = 'self._json_dict'
         for key_tuple in self._pointer_path[:-1]:
-            assignment_string += \
-                '["' + key_tuple[0] + '"]' \
-                if key_tuple[1] == 0 \
-                else '["' + key_tuple[0] + '"][' + str(key_tuple[1]) + ']'
+            assignment_string += '["' + key_tuple[0] + '"]' if key_tuple[1] == 0 else '["' + key_tuple[0] + '"][' + str(key_tuple[1]) + ']'
         assignment_string += '["' + self._pointer_path[-1][0] + '"]'
 
         exec('global attr_dict; attr_dict = {}')
         for key, value in attribute_pairs:
-            exec('attr_dict["' + self._ATTRIBUTE_PREFIX + '" + "' + key
-                 + '"] = "' + value + '"')
+            exec('attr_dict["' + self._ATTRIBUTE_PREFIX + '" + "' + key + '"] = "' + value + '"')
 
         if self._pointer_path[-1][1] == 0:
             assignment_string += ' = dict(' + str(attr_dict) + ')'
         elif self._pointer_path[-1][1] == 1:
-            assignment_string += ' = [dict(' + assignment_string \
-                + '[0]), dict(' + str(attr_dict) + ')]'
+            assignment_string += ' = [dict(' + assignment_string + '[0]), dict(' + str(attr_dict) + ')]'
         else:
-            assignment_string += '[len(' + assignment_string + ')-1] = dict(' \
-                + str(attr_dict) + ')'
+            assignment_string += '[len(' + assignment_string + ')-1] = dict(' + str(attr_dict) + ')'
 
         exec(assignment_string)
 
@@ -117,10 +102,7 @@ class XmlToJsonHandler(xml.sax.ContentHandler):
         """
         assignment_string = 'self._json_dict'
         for key_tuple in self._pointer_path[:-1]:
-            assignment_string += \
-                '["' + key_tuple[0] + '"]' \
-                if key_tuple[1] == 0 \
-                else '["' + key_tuple[0] + '"][' + str(key_tuple[1]) + ']'
+            assignment_string += '["' + key_tuple[0] + '"]' if key_tuple[1] == 0 else '["' + key_tuple[0] + '"][' + str(key_tuple[1]) + ']'
         assignment_string += '["' + self._pointer_path[-1][0] + '"]'
 
         is_empty = None
@@ -131,33 +113,16 @@ class XmlToJsonHandler(xml.sax.ContentHandler):
             assignment_string += ' = str(content)'
         elif self._pointer_path[-1][1] == 1:
             if is_empty:
-                assignment_string += \
-                    ' = [dict(assignment_string), str(content)]'
+                assignment_string += ' = [dict(assignment_string), str(content)]'
             else:
-                assignment_string += \
-                    '[1]["' + self._CONTENT_PREFIX + '"]  = str(content)'
+                assignment_string += '[1]["' + self._CONTENT_PREFIX + '"]  = str(content)'
         else:
             if is_empty:
                 assignment_string += '.append(str(content))'
             else:
-                assignment_string += '[len(' + assignment_string + ')-1]["' \
-                    + self._CONTENT_PREFIX + '"]  = str(content)'
+                assignment_string += '[len(' + assignment_string + ')-1]["' + self._CONTENT_PREFIX + '"]  = str(content)'
 
         exec(assignment_string)
 
     def get_json_dict(self):
-        return(self._json_dict)
-
-
-def xml_to_json(xml_input_path, json_output_path):
-    """
-    Utilizes the xml parser to convert the given xml to json
-    """
-    parser = xml.sax.make_parser()
-    parser.setFeature(xml.sax.handler.feature_namespaces, 0)
-    xml_handler = XmlToJsonHandler()
-    parser.setContentHandler(xml_handler)
-    parser.parse(xml_input_path)
-
-    with open(json_output_path, 'w') as f:
-        json.dump(xml_handler.get_json_dict(), f)
+        return self._json_dict

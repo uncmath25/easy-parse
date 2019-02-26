@@ -1,11 +1,21 @@
-.PHONY: clean test build publish
+.PHONY: clean flake test build publish
 
 clean:
 	@echo "*** Cleaning out previous builds and cached modules ***"
-	rm -rf build dist *.egg-info */__pycache__ *.xml *.json
+	@find . -name "__pycache__" -type d -exec rm -rf {} \;
+	@find . -name "*.pyc" -type f -exec rm {} \;
+	rm -rf .pytest_cache
+	rm -rf build
+	rm -rf dist
+	rm -rf easy_parse.egg-info
+
+flake:
+	@echo "*** Linting python code ***"
+	flake8 . --ignore="E501"
 
 test:
 	@echo "*** Running unit testing via pytest ***"
+	pytest .
 
 build: clean test
 	@echo "*** Building source archive and wheel for the package ***"
