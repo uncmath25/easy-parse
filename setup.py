@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='easy-parse',
-    version='0.1.0',
+    version='0.1.1',
     python_requires='>=3.6',
     packages=setuptools.find_packages(exclude=['*.tests', '*.data']),
     install_requires=[],
